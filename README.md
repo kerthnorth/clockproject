@@ -1,9 +1,3 @@
-Certainly! Below is a detailed `README.md` template for your project, which includes explanations of the features and instructions on how to use the app. Additionally, I'll include placeholders for the three screenshots (`alarm.png`, `stopwatch.png`, `timer.png`), as well as the background image (`1096112.jpg`).
-
-### README.md for **Clock App with Alarm, Stopwatch, and Timer**
-
----
-
 # Clock App with Alarm, Stopwatch, and Timer
 
 ## Overview
@@ -72,7 +66,7 @@ The timer allows you to set a countdown in seconds. When the timer reaches zero,
 Clone the repository or download the `Clock.java` file to your local machine.
 
 ```bash
-git clone https://github.com/your-username/clock-app.git
+git clone https://github.com/kerthnorth/clock-app.git
 ```
 
 ### 2. **Compile the Java Code**
@@ -116,15 +110,3 @@ Make sure that you have the background image (`1096112.jpg`) in the same directo
 3. **Use the Stopwatch**: Click the "Start" button to begin the stopwatch, and use "Stop" or "Reset" as needed.
 4. **Use the Timer**: In the Timer tab, enter the number of seconds, click "Start Timer," and the countdown will begin.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-### Notes:
-
-* Replace the URLs for images (`alarm.png`, `stopwatch.png`, `timer.png`, `1096112.jpg`) with the correct paths where the images are stored.
-* If the screenshots are stored locally, ensure to include them in the project directory or the path relative to the README file.
-
-Feel free to modify any part of the `README` to match your specific requirements!
