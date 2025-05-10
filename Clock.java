@@ -14,7 +14,7 @@ public class Clock {
     // This here is my constructor to set up the GUI
     public Clock() {
         // I create a window with my title
-        frame = new JFrame("UOPEOPLE CLOCK PROJECT");
+        frame = new JFrame("CLOCK PROJECT SIMULATOR");
         // Close application when window is closed
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // Set window size
@@ -23,7 +23,7 @@ public class Clock {
         frame.setLocationRelativeTo(null);
 
         // Load the background image
-        ImageIcon backgroundIcon = new ImageIcon("University-of-the-People-Banner.png");
+        ImageIcon backgroundIcon = new ImageIcon("1096112.jpg");
         // Get the actual image from the icon
         Image backgroundImage = backgroundIcon.getImage();
 
