@@ -1,117 +1,220 @@
-// Import necessary classes for GUI, fonts, dates, etc.
 import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 
-// Innitially I define the Clock class
 public class Clock {
-    // I then declare the main GUI components and a shared variable for time
     private JFrame frame;
     private JLabel clockLabel;
-    private volatile String currentTime;
+    private volatile LocalTime alarmTime;
+    private boolean alarmSet = false;
 
-    // This here is my constructor to set up the GUI
+    private Timer clockTimer;
+    private Timer stopwatchTimer;
+    private Timer countdownTimer;
+
+    private int stopwatchSeconds = 0;
+    private JLabel stopwatchLabel;
+    private boolean stopwatchRunning = false;
+
+    private int timerSeconds = 0;
+    private JLabel timerLabel;
+    private boolean timerRunning = false;
+
     public Clock() {
-        // I create a window with my title
-        frame = new JFrame("CLOCK PROJECT SIMULATOR");
-        // Close application when window is closed
+        frame = new JFrame("Multi-Feature Clock App");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Set window size
-        frame.setSize(600, 300);
-        // Center the window on the screen
+        frame.setSize(700, 500);
         frame.setLocationRelativeTo(null);
+        frame.setLayout(new BorderLayout());
 
         // Load the background image
         ImageIcon backgroundIcon = new ImageIcon("1096112.jpg");
-        // Get the actual image from the icon
         Image backgroundImage = backgroundIcon.getImage();
-
-        // Create a custom panel that paints the background image
         JPanel backgroundPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                // Draw the background image scaled to fit the panel
                 g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
             }
         };
-
-        // Set layout for positioning components
         backgroundPanel.setLayout(new BorderLayout());
 
-        // Create and style the clock label
+        // Create and add the clock label on top of the background
         clockLabel = new JLabel();
-        clockLabel.setFont(new Font("Arial", Font.BOLD, 40)); // Set font and size
-        clockLabel.setForeground(Color.WHITE); // Set text color to white
-        clockLabel.setHorizontalAlignment(JLabel.CENTER); // Center-align the text
+        clockLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        clockLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        backgroundPanel.add(clockLabel, BorderLayout.NORTH);
 
-        // Add the clock label to the top of the background panel
-        backgroundPanel.add(clockLabel, BorderLayout.BEFORE_FIRST_LINE);
+        // Tabbed Pane for Alarm, Stopwatch, and Timer
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setOpaque(false); // Keep it transparent to show background
 
-        // Set the custom panel as the content pane of the frame
+        // Alarm Tab
+        tabs.add("Alarm", buildAlarmPanel());
+
+        // Stopwatch Tab
+        tabs.add("Stopwatch", buildStopwatchPanel());
+
+        // Timer Tab
+        tabs.add("Timer", buildTimerPanel());
+
+        backgroundPanel.add(tabs, BorderLayout.CENTER);
+
+        // Set the background panel as the content pane
         frame.setContentPane(backgroundPanel);
-        // Make the window visible
         frame.setVisible(true);
+
+        // Start the clock
+        startClock();
     }
 
-    // Start a thread that continuously updates the current time
-    private void startUpdatingThread() {
-        Thread updater = new Thread(() -> {
-            // Define time format
-            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-            while (true) {
-                // Get and store the current time
-                currentTime = formatter.format(new Date());
-                try {
-                    // Wait 1 second before updating again
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break; // Exit if interrupted
-                }
+    // Alarm Panel setup
+    private JPanel buildAlarmPanel() {
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.setOpaque(false);  // Transparent panel
+
+        JLabel label = new JLabel("Set Alarm (HH:mm:ss):");
+        JTextField alarmField = new JTextField(8);
+        JButton setAlarm = new JButton("Set Alarm");
+
+        setAlarm.addActionListener(e -> {
+            try {
+                alarmTime = LocalTime.parse(alarmField.getText(), DateTimeFormatter.ofPattern("HH:mm:ss"));
+                alarmSet = true;
+                JOptionPane.showMessageDialog(frame, "Alarm set for " + alarmTime);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid time format. Use HH:mm:ss");
             }
         });
 
-        // Set thread to run in the background
-        updater.setDaemon(true);
-        // Start the thread
-        updater.start();
+        panel.add(label);
+        panel.add(alarmField);
+        panel.add(setAlarm);
+        return panel;
     }
 
-    // Start a thread that updates the label with the current time
-    private void startDisplayThread() {
-        Thread display = new Thread(() -> {
-            while (true) {
-                // Set the label text if time is available
-                if (currentTime != null) {
-                    clockLabel.setText(currentTime);
-                }
-                try {
-                    // Wait 1 second before refreshing the label
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    break; // Exit if interrupted
-                }
+    // Stopwatch Panel setup
+    private JPanel buildStopwatchPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);  // Transparent panel
+
+        stopwatchLabel = new JLabel("00:00:00", SwingConstants.CENTER);
+        stopwatchLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        panel.add(stopwatchLabel, BorderLayout.CENTER);
+
+        JPanel buttons = new JPanel();
+        JButton start = new JButton("Start");
+        JButton stop = new JButton("Stop");
+        JButton reset = new JButton("Reset");
+
+        start.addActionListener(e -> {
+            if (!stopwatchRunning) {
+                stopwatchRunning = true;
+                stopwatchTimer = new Timer(1000, ev -> updateStopwatch());
+                stopwatchTimer.start();
             }
         });
 
-        // Start the display thread
-        display.start();
+        stop.addActionListener(e -> {
+            stopwatchRunning = false;
+            if (stopwatchTimer != null) stopwatchTimer.stop();
+        });
+
+        reset.addActionListener(e -> {
+            stopwatchRunning = false;
+            stopwatchSeconds = 0;
+            if (stopwatchTimer != null) stopwatchTimer.stop();
+            stopwatchLabel.setText("00:00:00");
+        });
+
+        buttons.add(start);
+        buttons.add(stop);
+        buttons.add(reset);
+        panel.add(buttons, BorderLayout.SOUTH);
+        return panel;
     }
 
-    // Start both threads: updating and displaying time
-    public void startClock() {
-        startUpdatingThread();
-        startDisplayThread();
+    // Timer Panel setup
+    private JPanel buildTimerPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);  // Transparent panel
+
+        timerLabel = new JLabel("00:00:00", SwingConstants.CENTER);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        panel.add(timerLabel, BorderLayout.CENTER);
+
+        JPanel inputPanel = new JPanel();
+        JTextField input = new JTextField(5);
+        JButton startBtn = new JButton("Start Timer");
+        JButton stopBtn = new JButton("Stop");
+
+        startBtn.addActionListener(e -> {
+            try {
+                timerSeconds = Integer.parseInt(input.getText());
+                timerRunning = true;
+                countdownTimer = new Timer(1000, ev -> updateCountdown());
+                countdownTimer.start();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Enter seconds as a number.");
+            }
+        });
+
+        stopBtn.addActionListener(e -> {
+            timerRunning = false;
+            if (countdownTimer != null) countdownTimer.stop();
+        });
+
+        inputPanel.add(new JLabel("Seconds:"));
+        inputPanel.add(input);
+        inputPanel.add(startBtn);
+        inputPanel.add(stopBtn);
+        panel.add(inputPanel, BorderLayout.SOUTH);
+        return panel;
     }
 
-    // Main method to run the application
+    // Start the clock and update the time label
+    private void startClock() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        clockTimer = new Timer(1000, e -> {
+            String currentTime = LocalTime.now().format(formatter);
+            clockLabel.setText("Current Time: " + currentTime);
+            if (alarmSet && alarmTime != null && LocalTime.now().withNano(0).equals(alarmTime)) {
+                alarmSet = false;
+                Toolkit.getDefaultToolkit().beep();
+                JOptionPane.showMessageDialog(frame, "⏰ Alarm! Time is " + alarmTime);
+            }
+        });
+        clockTimer.start();
+    }
+
+    // Update Stopwatch
+    private void updateStopwatch() {
+        stopwatchSeconds++;
+        stopwatchLabel.setText(formatSeconds(stopwatchSeconds));
+    }
+
+    // Update Timer countdown
+    private void updateCountdown() {
+        if (timerSeconds > 0) {
+            timerSeconds--;
+            timerLabel.setText(formatSeconds(timerSeconds));
+        } else {
+            countdownTimer.stop();
+            Toolkit.getDefaultToolkit().beep();
+            JOptionPane.showMessageDialog(frame, "⏰ Timer Done!");
+        }
+    }
+
+    // Format time (hours, minutes, seconds)
+    private String formatSeconds(int totalSecs) {
+        int hrs = totalSecs / 3600;
+        int mins = (totalSecs % 3600) / 60;
+        int secs = totalSecs % 60;
+        return String.format("%02d:%02d:%02d", hrs, mins, secs);
+    }
+
     public static void main(String[] args) {
-        // Ensure GUI is created on the Swing event-dispatching thread
-        SwingUtilities.invokeLater(() -> {
-            // Create the clock app and start it
-            Clock app = new Clock();
-            app.startClock();
-        });
+        SwingUtilities.invokeLater(Clock::new);
     }
 }
