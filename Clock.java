@@ -31,13 +31,17 @@ public class Clock {
         // Load the background image
         ImageIcon backgroundIcon = new ImageIcon("1096112.jpg");
         Image backgroundImage = backgroundIcon.getImage();
+
+        // Create a custom panel that paints the background image
         JPanel backgroundPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
+                // Draw the background image scaled to fit the panel
                 g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
             }
         };
+
         backgroundPanel.setLayout(new BorderLayout());
 
         // Create and add the clock label on top of the background
